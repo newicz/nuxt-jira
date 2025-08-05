@@ -1,12 +1,12 @@
 import { ofetch } from 'ofetch'
 
 export default defineEventHandler(async () => {
-  const { jiraApiUrl, jiraUserEmail, jiraApiToken, jiraProjectKey } = useRuntimeConfig()
+  const { jiraApiUrl, jiraApiToken, jiraProjectKey } = useRuntimeConfig()
 
-  if (!jiraApiUrl || !jiraUserEmail || !jiraApiToken || !jiraProjectKey) {
+  if (!jiraApiUrl || !jiraApiToken || !jiraProjectKey) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'JIRA API credentials are not fully configured. Please check your app.env file.'
+      statusMessage: 'JIRA API credentials are not configured. Please check your app.env file.'
     })
   }
 
@@ -14,12 +14,11 @@ export default defineEventHandler(async () => {
   const jql = `project=${jiraProjectKey}`
   const fields = 'summary,worklog'
   const url = `${jiraUrl}?jql=${jql}&fields=${fields}`
-  const credentials = `${jiraUserEmail}:${jiraApiToken}`
 
   try {
     const response = await ofetch(url, {
       headers: {
-        'Authorization': `Basic ${Buffer.from(credentials).toString('base64')}`,
+        'Authorization': `Basic ${jiraApiToken}`,
         'Content-Type': 'application/json'
       }
     })
