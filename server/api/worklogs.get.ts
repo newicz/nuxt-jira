@@ -1,4 +1,5 @@
 import { ofetch } from 'ofetch'
+import { getQuery } from 'h3'
 
 function formatTime(seconds) {
   if (!seconds) return '0m'
@@ -15,8 +16,9 @@ function formatTime(seconds) {
   return result || '0m'
 }
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
   const { jiraApiUrl, jiraApiToken, jiraProjectKey } = useRuntimeConfig()
+  const { startDate, endDate } = getQuery(event)
 
   if (!jiraApiUrl || !jiraApiToken || !jiraProjectKey) {
     throw createError({
@@ -26,7 +28,10 @@ export default defineEventHandler(async () => {
   }
 
   const jiraUrl = `${jiraApiUrl}/rest/api/3/search`
-  const jql = `project=${jiraProjectKey}`
+  let jql = `project=${jiraProjectKey}`
+  if (startDate && endDate) {
+    jql += ` AND worklogDate >= "${startDate}" AND worklogDate <= "${endDate}"`
+  }
   const fields = 'summary,worklog,parent'
   const maxResults = 50
   let startAt = 0
@@ -35,7 +40,7 @@ export default defineEventHandler(async () => {
 
   try {
     do {
-      const url = `${jiraUrl}?jql=${jql}&fields=${fields}&expand=worklog&startAt=${startAt}&maxResults=${maxResults}`
+      const url = `${jiraUrl}?jql=${encodeURIComponent(jql)}&fields=${fields}&expand=worklog&startAt=${startAt}&maxResults=${maxResults}`
       const response = await ofetch(url, {
         headers: {
           'Authorization': `Basic ${jiraApiToken}`,

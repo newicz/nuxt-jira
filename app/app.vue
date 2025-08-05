@@ -1,6 +1,14 @@
 <template>
   <div>
     <h1>JIRA Worklogs Dashboard</h1>
+
+    <div class="filters">
+      <label for="startDate">Start Date:</label>
+      <input type="date" id="startDate" v-model="startDate">
+      <label for="endDate">End Date:</label>
+      <input type="date" id="endDate" v-model="endDate">
+    </div>
+
     <div v-if="pending">Loading...</div>
     <div v-if="error">{{ error.message }}</div>
     <div v-if="data">
@@ -64,12 +72,26 @@
 </template>
 
 <script setup>
-const { data, pending, error } = await useFetch('/api/worklogs')
+import { ref } from 'vue'
+
+const today = new Date()
+const thirtyDaysAgo = new Date()
+thirtyDaysAgo.setDate(today.getDate() - 30)
+
+const startDate = ref(thirtyDaysAgo.toISOString().split('T')[0])
+const endDate = ref(today.toISOString().split('T')[0])
+
+const { data, pending, error } = await useFetch(
+  () => `/api/worklogs?startDate=${startDate.value}&endDate=${endDate.value}`
+)
 </script>
 
 <style>
 h1, h2 {
   margin-top: 20px;
+}
+.filters {
+  margin-bottom: 20px;
 }
 table {
   width: 100%;
