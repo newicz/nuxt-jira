@@ -23,6 +23,11 @@ export default defineEventHandler(async () => {
       }
     })
 
+    console.log(`JIRA API response: Found ${response.issues.length} issues.`)
+    if (response.issues.length > 0) {
+      console.log('First issue:', JSON.stringify(response.issues[0], null, 2))
+    }
+
     const worklogs = response.issues.flatMap(issue => {
       if (issue.worklog) {
         return issue.worklog.worklogs.map(log => ({
