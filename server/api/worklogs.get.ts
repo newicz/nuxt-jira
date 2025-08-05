@@ -23,15 +23,18 @@ export default defineEventHandler(async () => {
       }
     })
 
-    const worklogs = response.issues.flatMap(issue =>
-      issue.worklog.worklogs.map(log => ({
-        issueKey: issue.key,
-        issueSummary: issue.fields.summary,
-        author: log.author.displayName,
-        timeSpent: log.timeSpent,
-        started: log.started
-      }))
-    )
+    const worklogs = response.issues.flatMap(issue => {
+      if (issue.worklog) {
+        return issue.worklog.worklogs.map(log => ({
+          issueKey: issue.key,
+          issueSummary: issue.fields.summary,
+          author: log.author.displayName,
+          timeSpent: log.timeSpent,
+          started: log.started
+        }))
+      }
+      return []
+    })
 
     return worklogs
   } catch (error) {
