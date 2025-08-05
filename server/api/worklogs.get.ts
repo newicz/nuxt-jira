@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
 
     } while (startAt < total)
 
-    const worklogs = allIssues.flatMap(issue => {
+    let worklogs = allIssues.flatMap(issue => {
       if (issue.fields.worklog) {
         return issue.fields.worklog.worklogs.map(log => ({
           issueKey: issue.key,
@@ -66,6 +66,18 @@ export default defineEventHandler(async (event) => {
       }
       return []
     })
+
+    if (startDate && endDate) {
+      const startDateTime = new Date(startDate)
+      startDateTime.setHours(0, 0, 0, 0)
+      const endDateTime = new Date(endDate)
+      endDateTime.setHours(23, 59, 59, 999)
+
+      worklogs = worklogs.filter(log => {
+        const logDateTime = new Date(log.started).getTime()
+        return logDateTime >= startDateTime.getTime() && logDateTime <= endDateTime.getTime()
+      })
+    }
 
     const timePerUser = worklogs.reduce((acc, log) => {
       acc[log.author] = (acc[log.author] || 0) + log.timeSpentSeconds
