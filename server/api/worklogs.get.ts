@@ -13,22 +13,28 @@ export default defineEventHandler(async () => {
   const jiraUrl = `${jiraApiUrl}/rest/api/3/search`
   const jql = `project=${jiraProjectKey}`
   const fields = 'summary,worklog'
-  const url = `${jiraUrl}?jql=${jql}&fields=${fields}&expand=worklog`
+  const maxResults = 50 // You can adjust this value
+  let startAt = 0
+  let total = 0
+  let allIssues = []
 
   try {
-    const response = await ofetch(url, {
-      headers: {
-        'Authorization': `Basic ${jiraApiToken}`,
-        'Content-Type': 'application/json'
-      }
-    })
+    do {
+      const url = `${jiraUrl}?jql=${jql}&fields=${fields}&expand=worklog&startAt=${startAt}&maxResults=${maxResults}`
+      const response = await ofetch(url, {
+        headers: {
+          'Authorization': `Basic ${jiraApiToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
 
-    console.log(`JIRA API response: Found ${response.issues.length} issues.`)
-    response.issues.forEach(issue => {
-      console.log(`Issue ${issue.key}:`, JSON.stringify(issue.fields.worklog, null, 2))
-    })
+      allIssues = allIssues.concat(response.issues)
+      total = response.total
+      startAt += response.issues.length
 
-    const worklogs = response.issues.flatMap(issue => {
+    } while (startAt < total)
+
+    const worklogs = allIssues.flatMap(issue => {
       if (issue.fields.worklog) {
         return issue.fields.worklog.worklogs.map(log => ({
           issueKey: issue.key,
