@@ -1,12 +1,12 @@
 import { ofetch } from 'ofetch'
 
 export default defineEventHandler(async () => {
-  const { jiraApiUrl, jiraApiToken, jiraProjectKey } = useRuntimeConfig()
+  const { jiraApiUrl, jiraUserEmail, jiraApiToken, jiraProjectKey } = useRuntimeConfig()
 
-  if (!jiraApiUrl || !jiraApiToken || !jiraProjectKey) {
+  if (!jiraApiUrl || !jiraUserEmail || !jiraApiToken || !jiraProjectKey) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'JIRA API credentials are not configured.'
+      statusMessage: 'JIRA API credentials are not fully configured. Please check your app.env file.'
     })
   }
 
@@ -14,11 +14,12 @@ export default defineEventHandler(async () => {
   const jql = `project=${jiraProjectKey}`
   const fields = 'summary,worklog'
   const url = `${jiraUrl}?jql=${jql}&fields=${fields}`
+  const credentials = `${jiraUserEmail}:${jiraApiToken}`
 
   try {
     const response = await ofetch(url, {
       headers: {
-        'Authorization': `Basic ${Buffer.from(jiraApiToken).toString('base64')}`,
+        'Authorization': `Basic ${Buffer.from(credentials).toString('base64')}`,
         'Content-Type': 'application/json'
       }
     })
@@ -38,7 +39,7 @@ export default defineEventHandler(async () => {
     console.error(error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to fetch worklogs from JIRA.'
+      statusMessage: 'Failed to fetch worklogs from JIRA. Please check your JIRA URL, credentials, and project key.'
     })
   }
 })

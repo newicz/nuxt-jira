@@ -9,11 +9,12 @@ This is a Nuxt application to view JIRA worklogs for a specific project.
 
     ```
     JIRA_API_URL="https://your-jira-instance.atlassian.net"
+    JIRA_USER_EMAIL="your_email@example.com"
     JIRA_API_TOKEN="your_jira_api_token"
     JIRA_PROJECT_KEY="your_project_key"
     ```
 
-3.  Replace the placeholder values with your actual JIRA API URL, token, and project key.
+3.  Replace the placeholder values with your actual JIRA API URL, email, token, and project key.
 
 # Nuxt Minimal Starter
 
