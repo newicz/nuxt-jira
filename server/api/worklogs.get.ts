@@ -1,5 +1,20 @@
 import { ofetch } from 'ofetch'
 
+function formatTime(seconds) {
+  if (!seconds) return '0m'
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  let result = ''
+  if (hours > 0) {
+    result += `${hours}h`
+  }
+  if (minutes > 0) {
+    if (result) result += ' '
+    result += `${minutes}m`
+  }
+  return result || '0m'
+}
+
 export default defineEventHandler(async () => {
   const { jiraApiUrl, jiraApiToken, jiraProjectKey } = useRuntimeConfig()
 
@@ -12,8 +27,8 @@ export default defineEventHandler(async () => {
 
   const jiraUrl = `${jiraApiUrl}/rest/api/3/search`
   const jql = `project=${jiraProjectKey}`
-  const fields = 'summary,worklog'
-  const maxResults = 50 // You can adjust this value
+  const fields = 'summary,worklog,parent'
+  const maxResults = 50
   let startAt = 0
   let total = 0
   let allIssues = []
@@ -40,14 +55,47 @@ export default defineEventHandler(async () => {
           issueKey: issue.key,
           issueSummary: issue.fields.summary,
           author: log.author.displayName,
-          timeSpent: log.timeSpent,
+          timeSpentSeconds: log.timeSpentSeconds,
           started: log.started
         }))
       }
       return []
     })
 
-    return worklogs
+    const timePerUser = worklogs.reduce((acc, log) => {
+      acc[log.author] = (acc[log.author] || 0) + log.timeSpentSeconds
+      return acc
+    }, {})
+
+    const timePerTask = worklogs.reduce((acc, log) => {
+      acc[log.issueKey] = {
+        summary: log.issueSummary,
+        time: (acc[log.issueKey]?.time || 0) + log.timeSpentSeconds
+      }
+      return acc
+    }, {})
+
+    const formattedTimePerUser = Object.entries(timePerUser).map(([user, time]) => ({
+      user,
+      time: formatTime(time)
+    }))
+
+    const formattedTimePerTask = Object.entries(timePerTask).map(([task, data]) => ({
+      task,
+      summary: data.summary,
+      time: formatTime(data.time)
+    }))
+
+    const formattedWorklogs = worklogs.map(log => ({
+        ...log,
+        timeSpent: formatTime(log.timeSpentSeconds)
+    }))
+
+    return {
+      worklogs: formattedWorklogs,
+      timePerUser: formattedTimePerUser,
+      timePerTask: formattedTimePerTask
+    }
   } catch (error) {
     console.error(error)
     throw createError({
