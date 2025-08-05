@@ -24,13 +24,13 @@ export default defineEventHandler(async () => {
     })
 
     console.log(`JIRA API response: Found ${response.issues.length} issues.`)
-    if (response.issues.length > 0) {
-      console.log('First issue:', JSON.stringify(response.issues[0], null, 2))
-    }
+    response.issues.forEach(issue => {
+      console.log(`Issue ${issue.key}:`, JSON.stringify(issue.fields.worklog, null, 2))
+    })
 
     const worklogs = response.issues.flatMap(issue => {
-      if (issue.worklog) {
-        return issue.worklog.worklogs.map(log => ({
+      if (issue.fields.worklog) {
+        return issue.fields.worklog.worklogs.map(log => ({
           issueKey: issue.key,
           issueSummary: issue.fields.summary,
           author: log.author.displayName,
