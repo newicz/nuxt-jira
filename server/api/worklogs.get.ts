@@ -13,7 +13,7 @@ export default defineEventHandler(async () => {
   const jiraUrl = `${jiraApiUrl}/rest/api/3/search`
   const jql = `project=${jiraProjectKey}`
   const fields = 'summary,worklog'
-  const url = `${jiraUrl}?jql=${jql}&fields=${fields}`
+  const url = `${jiraUrl}?jql=${jql}&fields=${fields}&expand=worklog`
 
   try {
     const response = await ofetch(url, {
